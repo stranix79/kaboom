@@ -1,0 +1,16 @@
+{
+  "name": "kaboom",
+  "version": "0.1.0",
+  "description": "Kaboom - un remake multijoueur de Bomberman jouable en 2 clics pendant la pause de midi. Dernier vivant gagne, les morts reviennent en fantomes vengeurs.",
+  "type": "module",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node --watch server/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

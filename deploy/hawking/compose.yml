@@ -1,0 +1,23 @@
+# Deploiement Kaboom sur hawking.
+# Le conteneur ecoute en interne sur 3000 ; c'est ghost_nginx qui publie
+# kaboom.stranix.net en HTTPS et proxifie vers ce service (voir README, section deploiement).
+services:
+  kaboom:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: kaboom:latest
+    container_name: kaboom
+    restart: unless-stopped
+    environment:
+      - PORT=3000
+    expose:
+      - "3000"
+    networks:
+      - web
+
+# Reseau partage avec ghost_nginx (a adapter au nom reel du reseau nginx sur hawking).
+networks:
+  web:
+    external: true
+    name: nginx_net
