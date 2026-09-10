@@ -196,6 +196,22 @@ wss.on('connection', (ws) => {
         leaveRoom(client);
         send(ws, publicRoomList());
         break;
+
+      case 'toLobby': {
+        // Quitter la partie en cours mais RESTER dans la room : on sort le joueur du jeu,
+        // il rejouera a la prochaine manche. Sa vue repasse au lobby.
+        const room = client.room;
+        if (!room) break;
+        if (room.game) {
+          room.game.removePlayer(client.id);
+          // Plus personne dans la partie -> on la ferme tout de suite (lobby pret a relancer).
+          if (room.game.players.size === 0) { room.game = null; room.phase = 'lobby'; room.overSince = 0; }
+        }
+        send(ws, room.lobbyState());
+        room.broadcast(room.lobbyState());
+        broadcastRoomList();
+        break;
+      }
     }
   });
 

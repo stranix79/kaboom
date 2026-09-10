@@ -234,14 +234,22 @@ function goHome() {
   history.replaceState(null, '', location.pathname);
   show('home');
 }
-$('leaveBtn').onclick = goHome;
-$('quitBtn').onclick = goHome;
+$('leaveBtn').onclick = goHome;   // dans le lobby : quitter la room -> accueil
+// En jeu : "Quitter" ramene au LOBBY de la room (on y reste), pas a l'accueil.
+function backToLobby() {
+  send({ t: 'toLobby' });
+  state = null; fx.length = 0;
+  for (const k in view) delete view[k];
+  for (const k in prevGhost) delete prevGhost[k];
+  show('lobby');
+}
+$('quitBtn').onclick = backToLobby;
 $('copyLink').onclick = () => { $('shareLink').select(); navigator.clipboard?.writeText($('shareLink').value); toast(t('copied')); };
 
 // ---- Entrees clavier ----
 window.addEventListener('keydown', (e) => {
   if (screens.game.hidden) return;
-  if (e.code === 'Escape') { goHome(); return; }
+  if (e.code === 'Escape') { backToLobby(); return; }
   if (e.repeat) return;
   if (e.code === 'Space') { e.preventDefault(); plant(); return; }
   if (e.code === 'KeyL') { send({ t: 'taunt' }); return; }
