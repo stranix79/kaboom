@@ -1,15 +1,20 @@
 :root {
   --bg: #0a0e14; --panel: #111925; --panel2: #0f1620; --line: #1d2a3a;
   --text: #d7fbee; --muted: #6f8598; --accent: #00ff9c; --accent2: #ff5c8a;
+  --on-accent: #06110b; --font: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --radius: 12px;
 }
 * { box-sizing: border-box; }
+/* IMPORTANT : sans ça, [hidden] est ecrase par .screen{display:flex} / .overlay{display:flex}
+   et les ecrans caches restent affiches (piege classique du toggle par attribut hidden). */
+[hidden] { display: none !important; }
 html, body { margin: 0; height: 100%; }
 body {
   background: radial-gradient(1200px 600px at 50% -10%, #12203040, transparent), var(--bg);
   color: var(--text);
-  font: 15px/1.5 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 15px/1.5 var(--font);
   -webkit-tap-highlight-color: transparent;
+  transition: background .2s, color .2s;
 }
 .screen { min-height: 100%; display: flex; flex-direction: column; align-items: center; padding: 24px 16px 40px; gap: 18px; }
 h1, h2, h3 { margin: 0 0 8px; }
@@ -40,14 +45,14 @@ button {
   border-radius: 8px; padding: 10px 14px; cursor: pointer; transition: .12s;
 }
 button:hover { border-color: var(--accent); }
-button.primary { background: var(--accent); color: #06110b; border-color: var(--accent); font-weight: 700; width: 100%; }
+button.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; width: 100%; }
 button.primary:hover { filter: brightness(1.08); }
 
 .theme-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .theme-row > span { color: var(--muted); font-size: 13px; }
 .chips { display: flex; gap: 8px; flex-wrap: wrap; }
 .chip { padding: 7px 12px; font-size: 13px; border-radius: 999px; }
-.chip.active { background: var(--accent); color: #06110b; border-color: var(--accent); font-weight: 700; }
+.chip.active { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
 
 .join-row { display: flex; gap: 8px; margin-bottom: 16px; }
 .join-row input { text-align: center; letter-spacing: 4px; font-weight: 700; }
@@ -103,3 +108,38 @@ canvas { display: block; max-width: 100%; height: auto; border: 1px solid var(--
   background: var(--accent2); color: #1a0410; padding: 10px 18px; border-radius: 999px;
   font-weight: 700; z-index: 100;
 }
+
+/* Pastille de connexion (dans le footer) */
+.conn { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--muted); vertical-align: middle; }
+.conn.connecting { background: #ffd23f; }
+.conn.connected { background: var(--accent); }
+.conn.offline { background: var(--accent2); }
+
+/* Bandeau d'erreur visible (debug a distance) */
+#errbar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  background: #ff3b3b; color: #fff; padding: 10px 14px; font-size: 13px;
+  text-align: center; font-weight: 700;
+}
+
+/* ---- Polish presentation ---- */
+body { background:
+  radial-gradient(900px 500px at 50% -8%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%),
+  var(--bg); }
+.brand h1 { text-shadow: 0 0 28px color-mix(in srgb, var(--accent) 55%, transparent); }
+.boom { display: inline-block; animation: bob 2.4s ease-in-out infinite; filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 70%, transparent)); }
+@keyframes bob { 0%,100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-8px) rotate(4deg); } }
+.legend { color: var(--muted); font-size: 13px; margin: 6px 0 0; opacity: .9; }
+
+.card { transition: border-color .15s, transform .15s; }
+.card:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+.room:hover, .chip:hover { transform: translateY(-1px); }
+button:active { transform: translateY(1px); }
+
+.soundtoggle {
+  position: fixed; top: 14px; right: 14px; z-index: 90;
+  width: 42px; height: 42px; border-radius: 50%; font-size: 18px; padding: 0;
+  background: var(--panel); border: 1px solid var(--line);
+}
+.soundtoggle:hover { border-color: var(--accent); }
+.overlay h2 { text-shadow: 0 0 20px color-mix(in srgb, var(--accent) 60%, transparent); }

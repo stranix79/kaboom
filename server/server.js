@@ -118,8 +118,8 @@ wss.on('connection', (ws) => {
 
       case 'join': {
         const room = rooms.get(String(m.code || '').toUpperCase());
-        if (!room) return send(ws, { t: 'error', msg: "Cette room n'existe pas ou est terminee." });
-        if (room.isFull()) return send(ws, { t: 'error', msg: 'Room pleine.' });
+        if (!room) return send(ws, { t: 'error', code: 'noroom' });
+        if (room.isFull()) return send(ws, { t: 'error', code: 'full' });
         if (client.room) leaveRoom(client);
         client.name = String(m.name || client.name).slice(0, 16) || 'Player';
         joinRoom(client, room);

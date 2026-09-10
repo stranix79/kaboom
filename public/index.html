@@ -10,69 +10,75 @@
 </head>
 <body>
   <div id="toast" hidden></div>
+  <div id="errbar" hidden></div>
+  <button id="soundBtn" class="soundtoggle" title="son"></button>
 
   <!-- ACCUEIL -->
   <section id="home" class="screen">
     <header class="brand">
-      <h1>💣 Kaboom</h1>
-      <p class="tagline">Le Bomberman de la pause de midi. Dernier vivant gagne.</p>
+      <h1><span class="boom">💣</span> Kaboom</h1>
+      <p class="tagline" data-i18n="tagline"></p>
+      <p class="legend" data-i18n="legend"></p>
     </header>
 
     <div class="card">
       <label class="field">
-        <span>Ton pseudo</span>
-        <input id="name" maxlength="16" placeholder="Ex : Gilles" autocomplete="off">
+        <span data-i18n="nick"></span>
+        <input id="name" maxlength="16" data-i18n-ph="nickPh" autocomplete="off">
       </label>
-
       <div class="theme-row">
-        <span>Thème</span>
+        <span data-i18n="theme"></span>
         <div id="themePicker" class="chips"></div>
+      </div>
+      <div class="theme-row">
+        <span data-i18n="lang"></span>
+        <div id="langPicker" class="chips"></div>
       </div>
     </div>
 
     <div class="cols">
       <div class="card">
-        <h2>Créer une partie</h2>
-        <label class="field"><span>Nom de la room</span>
-          <input id="roomName" maxlength="24" placeholder="Arène du midi" autocomplete="off"></label>
-        <label class="field"><span>Joueurs max</span>
+        <h2 data-i18n="createTitle"></h2>
+        <label class="field"><span data-i18n="roomName"></span>
+          <input id="roomName" maxlength="24" data-i18n-ph="roomNamePh" autocomplete="off"></label>
+        <label class="field"><span data-i18n="maxPlayers"></span>
           <select id="maxPlayers">
             <option>2</option><option>3</option><option selected>4</option>
             <option>5</option><option>6</option><option>8</option>
           </select></label>
-        <label class="check"><input type="checkbox" id="isPrivate"> Partie privée (accessible seulement par le lien)</label>
-        <button id="createBtn" class="primary">Créer & entrer</button>
+        <label class="check"><input type="checkbox" id="isPrivate"> <span data-i18n="private"></span></label>
+        <button id="createBtn" class="primary" data-i18n="createBtn"></button>
       </div>
 
       <div class="card">
-        <h2>Rejoindre</h2>
+        <h2 data-i18n="joinTitle"></h2>
         <div class="join-row">
-          <input id="joinCode" maxlength="4" placeholder="CODE" autocomplete="off" style="text-transform:uppercase">
-          <button id="joinBtn">Go</button>
+          <input id="joinCode" maxlength="4" data-i18n-ph="joinPh" autocomplete="off" style="text-transform:uppercase">
+          <button id="joinBtn" data-i18n="joinBtn"></button>
         </div>
-        <h3>Parties publiques</h3>
-        <div id="rooms" class="rooms"><p class="muted">Chargement…</p></div>
+        <h3 data-i18n="publicGames"></h3>
+        <div id="rooms" class="rooms"></div>
       </div>
     </div>
-    <footer class="foot">Un projet de l'atelier <a href="https://code79.com">code79.com</a></footer>
+    <footer class="foot"><span id="connDot" class="conn"></span> <span data-i18n="foot"></span></footer>
   </section>
 
   <!-- LOBBY -->
   <section id="lobby" class="screen" hidden>
     <div class="card lobby-card">
       <h2 id="lobbyName">Arène</h2>
-      <p class="code">Code : <b id="lobbyCode">----</b></p>
+      <p class="code"><span data-i18n="codeLabel"></span> <b id="lobbyCode">----</b></p>
       <div class="share">
         <input id="shareLink" readonly>
-        <button id="copyLink">Copier</button>
+        <button id="copyLink" data-i18n="copy"></button>
       </div>
-      <h3>Joueurs</h3>
+      <h3 data-i18n="players"></h3>
       <div id="lobbyPlayers" class="lobby-players"></div>
       <div class="lobby-actions">
-        <button id="startBtn" class="primary">Lancer</button>
-        <button id="leaveBtn">Quitter</button>
+        <button id="startBtn" class="primary"></button>
+        <button id="leaveBtn" data-i18n="leave"></button>
       </div>
-      <p class="muted">Astuce : colle le lien dans le chat de l'équipe, chacun arrive en 2 clics.</p>
+      <p class="muted" data-i18n="lobbyTip"></p>
     </div>
   </section>
 
@@ -101,7 +107,7 @@
       </div>
       <button id="padBomb" class="bomb-btn">💣</button>
     </div>
-    <p class="controls-hint">Déplacement : flèches ou WASD · Bombe : espace</p>
+    <p class="controls-hint" data-i18n="hint"></p>
   </section>
 
   <script type="module" src="/client.js"></script>
