@@ -75,6 +75,18 @@ et proxifie vers le conteneur. Points d'attention :
 3. Adapter le nom du réseau Docker dans `deploy/hawking/compose.yml` (`nginx_net`) à celui réellement
    utilisé par `ghost_nginx`, puis `docker compose -f deploy/hawking/compose.yml up -d --build`.
 
+## Sons personnalisés (optionnel)
+
+Le rire et l'explosion sont synthétisés (WebAudio, aucun fichier requis). Pour un
+vrai rire de voix humaine facon Halloween, ou un bruit d'explosion a toi, depose
+un fichier :
+
+- `public/laugh.mp3` : rire joue a la place du cackle synthetise (touche L / bouton 😈)
+- `public/boom.mp3` : bruit d'explosion
+
+Ils sont detectes automatiquement (via `/assets.json`) et joues a travers la reverb.
+Utilise ta propre voix, ou un son libre de droits (CC0 / Pixabay).
+
 ## Idées pour la suite
 
 - Classement / séries de victoires persistants (Redis).

@@ -15,7 +15,8 @@ const screens = { home: $('home'), lobby: $('lobby'), game: $('game') };
 const attract = new Attract('bg'); // fond animé de l'accueil
 function show(name) {
   for (const k in screens) screens[k].hidden = k !== name;
-  if (name === 'home') attract.start(); else attract.stop();
+  // Fond animé sur l'accueil ET le lobby/chat ; coupé seulement en pleine partie.
+  if (name === 'game') attract.stop(); else attract.start();
 }
 
 // ---- Preferences persistees ----
@@ -389,3 +390,4 @@ updateSoundBtn();
 attract.start();
 connect();
 loop();
+window.kaboomSound = sound; // aide au diagnostic audio

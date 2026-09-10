@@ -16,6 +16,12 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; cha
 const server = http.createServer((req, res) => {
   let urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
   if (urlPath === '/') urlPath = '/index.html';
+  // Liste des sons optionnels presents (evite les 404 quand on sonde laugh.mp3 / boom.mp3)
+  if (urlPath === '/assets.json') {
+    const has = (f) => fs.existsSync(path.join(PUBLIC, f));
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ laugh: has('laugh.mp3'), boom: has('boom.mp3') }));
+  }
   const filePath = path.join(PUBLIC, path.normalize(urlPath));
   if (!filePath.startsWith(PUBLIC)) { res.writeHead(403); return res.end('forbidden'); }
   fs.readFile(filePath, (err, data) => {
