@@ -391,3 +391,5 @@ attract.start();
 connect();
 loop();
 window.kaboomSound = sound; // aide au diagnostic audio
+// Version / build en bas a droite
+fetch('/version.json').then(r => r.json()).then(v => { $('version').textContent = `v${v.version} · ${v.build} · ${v.date}`; }).catch(() => {});

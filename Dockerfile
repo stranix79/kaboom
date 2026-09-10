@@ -10,6 +10,10 @@ RUN npm install --omit=dev
 COPY server ./server
 COPY public ./public
 
+# Commit court injecte au build : GIT_SHA -> affiche en bas a droite (version/build)
+ARG GIT_SHA=dev
+ENV KABOOM_BUILD=$GIT_SHA
+
 ENV PORT=3000
 EXPOSE 3000
 CMD ["node", "server/server.js"]

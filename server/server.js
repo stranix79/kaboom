@@ -10,6 +10,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(__dirname, '..', 'public');
 const PORT = process.env.PORT || 3000;
 const TICK_HZ = 20;
+// Version/build : version depuis package.json, commit injecte a la construction Docker (KABOOM_BUILD)
+const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+const BUILD = process.env.KABOOM_BUILD || 'dev';
+const BUILD_DATE = new Date().toISOString().slice(0, 10);
 
 // ---- Serveur HTTP : fichiers statiques du dossier public/ ----
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.png': 'image/png' };
@@ -17,6 +21,10 @@ const server = http.createServer((req, res) => {
   let urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
   if (urlPath === '/') urlPath = '/index.html';
   // Liste des sons optionnels presents (evite les 404 quand on sonde laugh.mp3 / boom.mp3)
+  if (urlPath === '/version.json') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ version: pkg.version, build: BUILD, date: BUILD_DATE }));
+  }
   if (urlPath === '/assets.json') {
     const has = (f) => fs.existsSync(path.join(PUBLIC, f));
     res.writeHead(200, { 'Content-Type': 'application/json' });
