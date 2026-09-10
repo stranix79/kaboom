@@ -41,6 +41,10 @@ const outbox = [];              // messages en attente tant que la socket n'est 
 const view = {};
 const keys = {};
 let lastInput = { ax: 0, ay: 0 };
+// Effets visuels (juice) : fantomes qui montent, etincelles, confettis + secousse d'ecran
+const fx = [];
+let shake = 0, lastT = performance.now();
+const prevGhost = {};
 
 // ---- Connexion WebSocket (avec file d'attente + reconnexion) ----
 function connect() {
@@ -77,8 +81,9 @@ function handle(m) {
       history.replaceState(null, '', `?room=${m.code}`);
       show('lobby');
       break;
-    case 'lobby': renderLobby(m); break;
-    case 'start': show('game'); break;
+    case 'lobby': renderLobby(m); if (m.phase === 'lobby' && !screens.game.hidden) { state = null; show('lobby'); } break;
+    case 'chat': addChatLine(m.line); break;
+    case 'start': for (const k in prevGhost) delete prevGhost[k]; fx.length = 0; show('game'); break;
     case 'state': state = m.s; break;
     case 'error': toast(m.code === 'noroom' ? t('errNoRoom') : m.code === 'full' ? t('errFull') : (m.msg || 'error')); break;
   }
@@ -150,7 +155,7 @@ $('createBtn').onclick = () => {
   const n = ($('name').value || '').trim();
   if (!n) return toast(t('needNick'));
   saveName(n);
-  send({ t: 'create', name: n, roomName: ($('roomName').value || '').trim(), max: Number($('maxPlayers').value), private: $('isPrivate').checked });
+  send({ t: 'create', name: n, roomName: ($('roomName').value || '').trim(), max: Number($('maxPlayers').value), size: $('mapSize').value, private: $('isPrivate').checked });
 };
 $('joinBtn').onclick = () => {
   const code = ($('joinCode').value || '').trim().toUpperCase();
@@ -168,23 +173,52 @@ function renderLobby(m) {
   $('lobbyCode').textContent = m.code;
   $('shareLink').value = `${location.origin}?room=${m.code}`;
   const box = $('lobbyPlayers'); box.innerHTML = '';
-  for (const p of m.players) {
+  for (const p of [...m.players].sort((a, b) => (b.wins || 0) - (a.wins || 0))) {
     const el = document.createElement('div'); el.className = 'plobby';
-    el.innerHTML = `<span class="dot" style="background:${p.color}"></span>${esc(p.name)}`;
+    el.innerHTML = `<span class="dot" style="background:${p.color}"></span><span class="pn">${esc(p.name)}</span>` +
+      (p.wins ? `<span class="wins">🏆 ${p.wins}</span>` : '');
     box.appendChild(el);
   }
+  const res = $('lobbyResult');
+  if (m.lastResult) { res.hidden = false; res.textContent = m.lastResult.name ? `🏆 ${m.lastResult.name} ${t('roundWin')}` : t('roundDraw'); }
+  else res.hidden = true;
+  const log = $('chatLog'); log.innerHTML = '';
+  for (const l of (m.chat || [])) addChatLine(l);
   renderLobbyButtons();
 }
+function addChatLine(l) {
+  const log = $('chatLog');
+  const el = document.createElement('div'); el.className = 'chatline';
+  el.innerHTML = `<b style="color:${l.color}">${esc(l.name)}</b> ${esc(l.text)}`;
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+}
+function sendChat() {
+  const inp = $('chatInput'); const txt = (inp.value || '').trim();
+  if (!txt) return; send({ t: 'chat', text: txt }); inp.value = '';
+}
+$('chatSend').onclick = sendChat;
+$('chatInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); sendChat(); } });
 function renderLobbyButtons() {
   $('startBtn').textContent = lobbyPlayers < 2 ? t('startSolo') : `${t('start')} (${lobbyPlayers})`;
 }
 $('startBtn').onclick = () => send({ t: 'start' });
-$('leaveBtn').onclick = () => { send({ t: 'leave' }); room = null; history.replaceState(null, '', location.pathname); show('home'); };
+function goHome() {
+  send({ t: 'leave' });
+  room = null; state = null; fx.length = 0;
+  for (const k in view) delete view[k];
+  for (const k in prevGhost) delete prevGhost[k];
+  history.replaceState(null, '', location.pathname);
+  show('home');
+}
+$('leaveBtn').onclick = goHome;
+$('quitBtn').onclick = goHome;
 $('copyLink').onclick = () => { $('shareLink').select(); navigator.clipboard?.writeText($('shareLink').value); toast(t('copied')); };
 
 // ---- Entrees clavier ----
 window.addEventListener('keydown', (e) => {
   if (screens.game.hidden) return;
+  if (e.code === 'Escape') { goHome(); return; }
   if (e.repeat) return;
   if (e.code === 'Space') { e.preventDefault(); plant(); return; }
   keys[e.code] = true; updateInput();
@@ -213,6 +247,7 @@ const ctx = canvas.getContext('2d');
 const tile = 34;
 function loop() {
   requestAnimationFrame(loop);
+  const now = performance.now(); const dt = Math.min((now - lastT) / 1000, 0.05); lastT = now;
   if (screens.game.hidden || !state) return;
   const theme = THEMES[themeKey];
   const W = state.cols * tile, H = state.rows * tile;
@@ -223,11 +258,62 @@ function loop() {
     view[p.id].y += (p.y - view[p.id].y) * 0.35;
   }
   for (const id in view) if (!state.players.find(p => p.id == id)) delete view[id];
-  drawGame(ctx, state, view, theme, tile);
-  // SFX explosion : une salve apparait (le nombre de flammes augmente)
-  if (state.explosions.length > prevExpl) sound.boom();
+  // Detection de mort -> petit fantome qui monte au ciel
+  for (const p of state.players) {
+    if (prevGhost[p.id] === false && p.ghost) {
+      const v = view[p.id] || p; spawnDeathGhost(v.x, v.y, p.color); spawnSparks(v.x, v.y, p.color, 10); shake = Math.max(shake, 5);
+    }
+    prevGhost[p.id] = p.ghost;
+  }
+  // Explosion -> son + secousse + etincelles
+  if (state.explosions.length > prevExpl) {
+    sound.boom(); shake = Math.max(shake, 7);
+    const e = state.explosions[0]; if (e) spawnSparks(e.c + 0.5, e.r + 0.5, theme.explosion, 6);
+  }
   prevExpl = state.explosions.length;
+  // Rendu avec secousse d'ecran
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = theme.bg; ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  if (shake > 0.3) { ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake); shake *= 0.86; } else shake = 0;
+  drawGame(ctx, state, view, theme, tile);
+  drawFx(dt, theme);
+  ctx.restore();
   updateHud();
+}
+
+// ---- Particules ----
+function drawFx(dt, theme) {
+  for (let i = fx.length - 1; i >= 0; i--) {
+    const f = fx[i]; f.life -= dt;
+    if (f.life <= 0) { fx.splice(i, 1); continue; }
+    const a = Math.max(0, f.life / f.life0);
+    if (f.type === 'ghost') {
+      f.y += f.vy * dt; f.x += Math.sin(f.life * 6) * 0.012;
+      const x = f.x * tile, y = f.y * tile, s = tile * 0.34;
+      ctx.save(); ctx.globalAlpha = a * 0.9; ctx.fillStyle = f.color;
+      ctx.beginPath(); ctx.arc(x, y - 2, s, Math.PI, 0); ctx.lineTo(x + s, y + s * 0.9);
+      for (let k = 0; k < 3; k++) ctx.lineTo(x + s - (k + 0.5) * s * 0.66, y + s * 0.9 - (k % 2 ? 0 : s * 0.3));
+      ctx.lineTo(x - s, y + s * 0.9); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#0b0b0b';
+      ctx.beginPath(); ctx.arc(x - s * 0.3, y - s * 0.15, s * 0.15, 0, 7); ctx.arc(x + s * 0.3, y - s * 0.15, s * 0.15, 0, 7); ctx.fill();
+      ctx.restore();
+    } else if (f.type === 'spark') {
+      f.x += f.vx * dt; f.y += f.vy * dt; f.vy += 6 * dt;
+      ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = f.color; ctx.fillRect(f.x * tile - 2, f.y * tile - 2, 4, 4); ctx.restore();
+    } else if (f.type === 'confetti') {
+      f.x += f.vx * dt; f.y += f.vy * dt; f.vy += 7 * dt; f.rot += f.vr * dt;
+      ctx.save(); ctx.globalAlpha = a; ctx.translate(f.x * tile, f.y * tile); ctx.rotate(f.rot);
+      ctx.fillStyle = f.color; ctx.fillRect(-3, -5, 6, 10); ctx.restore();
+    }
+  }
+}
+function spawnDeathGhost(x, y, color) { fx.push({ type: 'ghost', x, y, vy: -1.7, life: 1.4, life0: 1.4, color }); }
+function spawnSparks(x, y, color, n) { for (let i = 0; i < n; i++) { const a = Math.random() * 7, s = 1 + Math.random() * 3.5; fx.push({ type: 'spark', x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.45, life0: 0.45, color }); } }
+function spawnConfetti() {
+  const cols = ['#00ff9c', '#ff5c8a', '#4db5ff', '#ffd23f', '#b388ff'];
+  const w = state ? state.cols : 15;
+  for (let i = 0; i < 80; i++) fx.push({ type: 'confetti', x: Math.random() * w, y: -Math.random() * 3, vx: (Math.random() - 0.5) * 2, vy: 2 + Math.random() * 3, rot: Math.random() * 7, vr: (Math.random() - 0.5) * 10, life: 2.6, life0: 2.6, color: cols[i % cols.length] });
 }
 function updateHud() {
   const alive = state.players.filter(p => p.alive && !p.ghost).length;
@@ -242,16 +328,19 @@ function updateHud() {
     if (prevBombs && (me.bombs > prevBombs || me.range > prevRange)) sound.pickup();
     prevBombs = me.bombs; prevRange = me.range;
   }
-  // SFX fin de manche
+  // Fin de manche : son + confettis pour le gagnant
   if (state.phase !== prevPhase) {
-    if (state.phase === 'over') (state.winner && state.winner.id == myId) ? sound.win() : sound.lose();
+    if (state.phase === 'over') {
+      if (state.winner && state.winner.id == myId) sound.win(); else sound.lose();
+      if (state.winner) spawnConfetti();
+    }
     prevPhase = state.phase;
   }
   const over = $('overlay');
   if (state.phase === 'over') {
     over.hidden = false;
     $('overTitle').textContent = state.winner ? `🏆 ${state.winner.name} ${t('wins')}` : t('draw');
-    $('overSub').textContent = `${t('newRound')} ${Math.ceil(state.restartIn)}s`;
+    $('overSub').textContent = '';
   } else over.hidden = true;
 }
 

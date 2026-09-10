@@ -46,6 +46,14 @@
             <option>2</option><option>3</option><option selected>4</option>
             <option>5</option><option>6</option><option>8</option>
           </select></label>
+        <label class="field"><span data-i18n="mapSize"></span>
+          <select id="mapSize">
+            <option value="auto" data-i18n="sizeAuto" selected></option>
+            <option value="s" data-i18n="sizeS"></option>
+            <option value="m" data-i18n="sizeM"></option>
+            <option value="l" data-i18n="sizeL"></option>
+            <option value="xl" data-i18n="sizeXL"></option>
+          </select></label>
         <label class="check"><input type="checkbox" id="isPrivate"> <span data-i18n="private"></span></label>
         <button id="createBtn" class="primary" data-i18n="createBtn"></button>
       </div>
@@ -60,7 +68,13 @@
         <div id="rooms" class="rooms"></div>
       </div>
     </div>
-    <footer class="foot"><span id="connDot" class="conn"></span> <span data-i18n="foot"></span></footer>
+    <footer class="foot">
+      <span id="connDot" class="conn"></span>
+      <span data-i18n="footA"></span>
+      <a href="https://stranix.net" target="_blank" rel="noopener">stranix.net</a>
+      <span data-i18n="footB"></span>
+      <a href="https://code79.com" target="_blank" rel="noopener">code79</a>
+    </footer>
   </section>
 
   <!-- LOBBY -->
@@ -68,6 +82,7 @@
     <div class="card lobby-card">
       <h2 id="lobbyName">Arène</h2>
       <p class="code"><span data-i18n="codeLabel"></span> <b id="lobbyCode">----</b></p>
+      <p id="lobbyResult" class="result" hidden></p>
       <div class="share">
         <input id="shareLink" readonly>
         <button id="copyLink" data-i18n="copy"></button>
@@ -78,6 +93,13 @@
         <button id="startBtn" class="primary"></button>
         <button id="leaveBtn" data-i18n="leave"></button>
       </div>
+      <div class="chat">
+        <div id="chatLog" class="chatlog"></div>
+        <div class="chat-row">
+          <input id="chatInput" maxlength="200" data-i18n-ph="chatPh" autocomplete="off">
+          <button id="chatSend">➤</button>
+        </div>
+      </div>
       <p class="muted" data-i18n="lobbyTip"></p>
     </div>
   </section>
@@ -85,6 +107,7 @@
   <!-- JEU -->
   <section id="game" class="screen" hidden>
     <div class="hud">
+      <button id="quitBtn" class="quit" title="quit">⤺</button>
       <span id="hudAlive">—</span>
       <span id="hudTimer">—</span>
       <span id="hudStats"></span>

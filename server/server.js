@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
-import { Game, PLAYER_COLORS } from './game.js';
+import { Game, PLAYER_COLORS, MAPS, autoSize } from './game.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(__dirname, '..', 'public');
@@ -31,14 +31,19 @@ const rooms = new Map();   // code -> Room
 let clientSeq = 0;
 
 class Room {
-  constructor(code, name, max, isPrivate) {
+  constructor(code, name, max, isPrivate, size) {
     this.code = code;
     this.name = name;
     this.max = Math.min(Math.max(max, 2), 8);
     this.private = !!isPrivate;
+    this.size = (size && size !== 'auto' && MAPS[size]) ? size : autoSize(this.max); // 'auto' -> selon le nb de joueurs
     this.phase = 'lobby';   // 'lobby' | 'playing'
     this.members = new Map(); // clientId -> { ws, name, color }
     this.game = null;
+    this.scores = new Map();  // clientId -> victoires cumulees (persistent entre manches)
+    this.chat = [];           // dernieres lignes de chat
+    this.lastResult = null;   // { name } du gagnant de la derniere manche
+    this.overSince = 0;       // horodatage de fin de manche (pour l'affichage du gagnant avant retour lobby)
   }
   colorFor() {
     const used = new Set([...this.members.values()].map(m => m.color));
@@ -51,8 +56,10 @@ class Room {
   }
   lobbyState() {
     return {
-      t: 'lobby', code: this.code, name: this.name, max: this.max, private: this.private, phase: this.phase,
-      players: [...this.members.values()].map(m => ({ name: m.name, color: m.color })),
+      t: 'lobby', code: this.code, name: this.name, max: this.max, private: this.private, phase: this.phase, size: this.size,
+      players: [...this.members].map(([id, m]) => ({ name: m.name, color: m.color, wins: this.scores.get(id) || 0 })),
+      lastResult: this.lastResult,
+      chat: this.chat.slice(-40),
     };
   }
 }
@@ -110,7 +117,7 @@ wss.on('connection', (ws) => {
       case 'create': {
         if (client.room) leaveRoom(client);
         client.name = String(m.name || client.name).slice(0, 16) || 'Player';
-        const room = new Room(makeCode(), String(m.roomName || 'Arene').slice(0, 24) || 'Arene', Number(m.max) || 4, m.private);
+        const room = new Room(makeCode(), String(m.roomName || 'Arene').slice(0, 24) || 'Arene', Number(m.max) || 4, m.private, m.size);
         rooms.set(room.code, room);
         joinRoom(client, room);
         break;
@@ -130,7 +137,8 @@ wss.on('connection', (ws) => {
         const room = client.room;
         if (!room || room.phase === 'playing') return;
         const ids = new Map([...room.members].map(([id, info]) => [id, { name: info.name, color: info.color }]));
-        room.game = new Game(ids);
+        const dim = MAPS[room.size] || MAPS.m;
+        room.game = new Game(ids, dim.cols, dim.rows);
         room.phase = 'playing';
         room.broadcast({ t: 'start' });
         broadcastRoomList();
@@ -149,6 +157,18 @@ wss.on('connection', (ws) => {
         break;
       }
 
+      case 'chat': {
+        const room = client.room;
+        const text = String(m.text || '').slice(0, 200).trim();
+        if (!room || !text) break;
+        const info = room.members.get(client.id);
+        const line = { name: info?.name || client.name, color: info?.color || '#fff', text };
+        room.chat.push(line);
+        if (room.chat.length > 60) room.chat.shift();
+        room.broadcast({ t: 'chat', line });
+        break;
+      }
+
       case 'leave':
         leaveRoom(client);
         send(ws, publicRoomList());
@@ -163,6 +183,7 @@ wss.on('connection', (ws) => {
 function joinRoom(client, room) {
   const color = room.colorFor();
   room.members.set(client.id, { ws: client.ws, name: client.name, color });
+  if (!room.scores.has(client.id)) room.scores.set(client.id, 0);
   client.room = room;
   send(client.ws, { t: 'joined', code: room.code, you: client.id, phase: room.phase });
   room.broadcast(room.lobbyState());
@@ -180,8 +201,22 @@ setInterval(() => {
   for (const room of rooms.values()) {
     if (room.phase !== 'playing' || !room.game) continue;
     room.game.tick(dt);
-    room.game.maybeRestart();
     room.broadcast({ t: 'state', s: room.game.serialize() });
+    // Fin de manche : on montre le gagnant ~3,5 s puis retour au lobby (pas de restart auto).
+    if (room.game.phase === 'over') {
+      if (!room.overSince) {
+        room.overSince = now;
+        const w = room.game.winner;
+        if (w) room.scores.set(w.id, (room.scores.get(w.id) || 0) + 1);
+        room.lastResult = w ? { name: w.name } : { name: null };
+      } else if (now - room.overSince >= 3500) {
+        room.game = null;
+        room.phase = 'lobby';
+        room.overSince = 0;
+        room.broadcast(room.lobbyState());
+        broadcastRoomList();
+      }
+    }
   }
 }, 1000 / TICK_HZ);
 
