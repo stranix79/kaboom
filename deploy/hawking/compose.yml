@@ -2,6 +2,9 @@
 # Le conteneur ecoute en interne sur 3000 (pas de port hote) ; ghost_nginx le joint
 # via le DNS Docker (http://kaboom:3000) et publie kaboom.stranix.net en HTTPS.
 # Deploiement : GIT_SHA=$(git rev-parse --short HEAD) docker compose -f deploy/hawking/compose.yml up -d --build
+# name fige le projet compose (sinon = "hawking", partage avec code79_site -> warning orphan
+# et risque de suppression croisee via --remove-orphans).
+name: kaboom
 services:
   kaboom:
     build:
