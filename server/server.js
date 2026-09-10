@@ -58,6 +58,7 @@ class Room {
     return {
       t: 'lobby', code: this.code, name: this.name, max: this.max, private: this.private, phase: this.phase, size: this.size,
       players: [...this.members].map(([id, m]) => ({ name: m.name, color: m.color, wins: this.scores.get(id) || 0 })),
+      dims: MAPS[this.size] ? { cols: MAPS[this.size].cols, rows: MAPS[this.size].rows } : null,
       lastResult: this.lastResult,
       chat: this.chat.slice(-40),
     };

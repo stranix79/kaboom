@@ -180,6 +180,7 @@ function renderLobby(m) {
   $('lobbyName').textContent = m.name;
   $('lobbyCode').textContent = m.code;
   $('shareLink').value = `${location.origin}?room=${m.code}`;
+  $('lobbySize').textContent = m.dims ? `${t('mapSize')} : ${m.dims.cols} × ${m.dims.rows}` : '';
   const box = $('lobbyPlayers'); box.innerHTML = '';
   for (const p of [...m.players].sort((a, b) => (b.wins || 0) - (a.wins || 0))) {
     const el = document.createElement('div'); el.className = 'plobby';
