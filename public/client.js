@@ -31,8 +31,9 @@ const sound = new Sound();
 let soundOn = localStorage.getItem('kaboom_sound') !== 'off';
 sound.enabled = soundOn;
 let prevPhase = '', prevExpl = 0, prevBombs = 0, prevRange = 0;
-function updateSoundBtn() { $('soundBtn').textContent = soundOn ? '🔊' : '🔇'; }
-$('soundBtn').onclick = () => { soundOn = !soundOn; localStorage.setItem('kaboom_sound', soundOn ? 'on' : 'off'); sound.setEnabled(soundOn); updateSoundBtn(); };
+// Le bouton coupe/active la MUSIQUE uniquement (les bruitages et le rire restent).
+function updateSoundBtn() { const b = $('soundBtn'); b.textContent = soundOn ? '🎵' : '🔇'; b.title = soundOn ? 'musique on' : 'musique off'; }
+$('soundBtn').onclick = () => { soundOn = !soundOn; localStorage.setItem('kaboom_sound', soundOn ? 'on' : 'off'); sound.setMusic(soundOn); updateSoundBtn(); };
 // L'audio ne peut demarrer qu'apres un geste utilisateur
 window.addEventListener('pointerdown', () => { sound.resume(); if (soundOn) sound.startMusic(); }, { once: true });
 function plant() { send({ t: 'plant' }); sound.blip(); }

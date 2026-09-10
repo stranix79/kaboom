@@ -157,7 +157,8 @@ button:active { transform: translateY(1px); }
 .chat-row button { flex: 0 0 auto; }
 
 /* Bouton Quitter dans le HUD de jeu */
-.hud .quit { width: 30px; height: 30px; padding: 0; border-radius: 50%; font-size: 15px; line-height: 1; }
+.hud .hudbtn { padding: 5px 12px; border-radius: 999px; font-size: 13px; }
+.hud .iconbtn { width: 34px; height: 34px; padding: 0; border-radius: 50%; font-size: 16px; line-height: 1; }
 
 /* ---- Fond animé de l'accueil ---- */
 #bg { position: fixed; inset: 0; z-index: 0; display: none; }

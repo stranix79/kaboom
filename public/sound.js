@@ -19,12 +19,32 @@ export class Sound {
     this.master = this.ctx.createGain();
     this.master.gain.value = 0.5;
     this.master.connect(this.ctx.destination);
+    // Bus d'effets caverneux : echo (delay + feedback) + reverb (convolver).
+    // On y envoie les sons qui doivent sonner "lugubre" (ex : le rire).
+    this.delay = this.ctx.createDelay(1.0); this.delay.delayTime.value = 0.28;
+    this.fb = this.ctx.createGain(); this.fb.gain.value = 0.5;
+    this.delay.connect(this.fb); this.fb.connect(this.delay);
+    this.reverb = this.ctx.createConvolver(); this.reverb.buffer = this._impulse(2.6, 3);
+    this.fxIn = this.ctx.createGain(); this.fxIn.gain.value = 0.9;
+    this.fxIn.connect(this.delay); this.delay.connect(this.master);
+    this.fxIn.connect(this.reverb); this.reverb.connect(this.master);
+  }
+
+  _impulse(dur, decay) {
+    const rate = this.ctx.sampleRate, len = Math.floor(rate * dur);
+    const buf = this.ctx.createBuffer(2, len, rate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+    return buf;
   }
 
   // A appeler sur un geste utilisateur pour debloquer l'audio.
   resume() { this.ensure(); if (this.ctx?.state === 'suspended') this.ctx.resume(); }
 
-  setEnabled(on) {
+  // Le bouton ne coupe QUE la musique. Les bruitages et le rire jouent toujours.
+  setMusic(on) {
     this.enabled = on;
     if (on) { this.resume(); this.startMusic(); }
     else this.stopMusic();
@@ -32,7 +52,7 @@ export class Sound {
 
   // --- Petit synthe : une note ---
   note(freq, dur, type = 'square', vol = 0.2, when = 0) {
-    if (!this.enabled || !this.ctx) return;
+    if (!this.ctx) return;
     const t = this.ctx.currentTime + when;
     const o = this.ctx.createOscillator();
     const g = this.ctx.createGain();
@@ -48,7 +68,7 @@ export class Sound {
   blip() { this.note(660, 0.08, 'square', 0.18); }                 // pose de bombe
   pickup() { this.note(880, 0.06, 'triangle', 0.2); this.note(1320, 0.09, 'triangle', 0.2, 0.06); }
   boom() {
-    if (!this.enabled || !this.ctx) return;
+    if (!this.ctx) return;
     const now = performance.now(); if (now - this._lastBoom < 90) return; this._lastBoom = now;
     const t = this.ctx.currentTime;
     // souffle = bruit blanc filtre qui descend
@@ -64,14 +84,31 @@ export class Sound {
   win() { [523, 659, 784, 1047].forEach((f, i) => this.note(f, 0.18, 'square', 0.22, i * 0.12)); }
   lose() { [392, 330, 262].forEach((f, i) => this.note(f, 0.22, 'sawtooth', 0.18, i * 0.14)); }
   // Rire debile et un peu glauque : bursts descendants, detunes, filtres bas
+  // Rire lugubre : lent, grave, vibrato, envoye dans l'echo + la reverb -> effet caverneux.
   laugh() {
-    if (!this.enabled || !this.ctx) return;
     this.resume();
-    const base = [230, 210, 195, 175, 160, 150];
-    base.forEach((f, i) => {
-      const when = i * 0.12;
-      this.note(f, 0.09, 'sawtooth', 0.16, when);        // "ha"
-      this.note(f * 0.5 + 4, 0.11, 'square', 0.12, when); // basse detune, effet glauque
+    if (!this.ctx) return;
+    const steps = [150, 138, 127, 117, 107, 97, 88];
+    steps.forEach((f, i) => {
+      const when = this.ctx.currentTime + i * 0.2;
+      const o = this.ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f;
+      const o2 = this.ctx.createOscillator(); o2.type = 'square'; o2.frequency.value = f * 0.5; o2.detune.value = 10;
+      const lp = this.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 620;
+      const trem = this.ctx.createGain(); // enveloppe "ha-ha" saccadee
+      const g = trem.gain;
+      g.setValueAtTime(0.0001, when);
+      g.linearRampToValueAtTime(0.24, when + 0.03);
+      g.exponentialRampToValueAtTime(0.05, when + 0.1);
+      g.linearRampToValueAtTime(0.2, when + 0.13);
+      g.exponentialRampToValueAtTime(0.0001, when + 0.2);
+      const lfo = this.ctx.createOscillator(); lfo.frequency.value = 6.5;      // vibrato
+      const lfoG = this.ctx.createGain(); lfoG.gain.value = 7;
+      lfo.connect(lfoG); lfoG.connect(o.frequency);
+      o.connect(lp); o2.connect(lp); lp.connect(trem);
+      trem.connect(this.master);            // son direct
+      if (this.fxIn) trem.connect(this.fxIn); // + echo + reverb
+      o.start(when); o2.start(when); lfo.start(when);
+      o.stop(when + 0.22); o2.stop(when + 0.22); lfo.stop(when + 0.22);
     });
   }
 
