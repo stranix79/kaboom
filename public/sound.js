@@ -63,6 +63,17 @@ export class Sound {
   }
   win() { [523, 659, 784, 1047].forEach((f, i) => this.note(f, 0.18, 'square', 0.22, i * 0.12)); }
   lose() { [392, 330, 262].forEach((f, i) => this.note(f, 0.22, 'sawtooth', 0.18, i * 0.14)); }
+  // Rire debile et un peu glauque : bursts descendants, detunes, filtres bas
+  laugh() {
+    if (!this.enabled || !this.ctx) return;
+    this.resume();
+    const base = [230, 210, 195, 175, 160, 150];
+    base.forEach((f, i) => {
+      const when = i * 0.12;
+      this.note(f, 0.09, 'sawtooth', 0.16, when);        // "ha"
+      this.note(f * 0.5 + 4, 0.11, 'square', 0.12, when); // basse detune, effet glauque
+    });
+  }
 
   // --- Musique de fond : une boucle simple basse + arpege ---
   startMusic() {

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+  <canvas id="bg"></canvas>
   <div id="toast" hidden></div>
   <div id="errbar" hidden></div>
   <button id="soundBtn" class="soundtoggle" title="son"></button>
@@ -96,9 +97,11 @@
       <div class="chat">
         <div id="chatLog" class="chatlog"></div>
         <div class="chat-row">
+          <button id="emojiBtn" class="emoji-btn" title="emoji">😀</button>
           <input id="chatInput" maxlength="200" data-i18n-ph="chatPh" autocomplete="off">
           <button id="chatSend">➤</button>
         </div>
+        <div id="emojiBar" class="emoji-bar" hidden></div>
       </div>
       <p class="muted" data-i18n="lobbyTip"></p>
     </div>
@@ -111,7 +114,9 @@
       <span id="hudAlive">—</span>
       <span id="hudTimer">—</span>
       <span id="hudStats"></span>
+      <button id="tauntBtn" class="quit" title="taunt (L)">😈</button>
     </div>
+    <div id="tauntOverlay" class="taunt-overlay" hidden></div>
     <div class="arena-wrap">
       <canvas id="canvas"></canvas>
       <div id="overlay" class="overlay" hidden>

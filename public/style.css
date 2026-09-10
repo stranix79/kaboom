@@ -158,3 +158,23 @@ button:active { transform: translateY(1px); }
 
 /* Bouton Quitter dans le HUD de jeu */
 .hud .quit { width: 30px; height: 30px; padding: 0; border-radius: 50%; font-size: 15px; line-height: 1; }
+
+/* ---- Fond animé de l'accueil ---- */
+#bg { position: fixed; inset: 0; z-index: 0; display: none; }
+.screen { position: relative; z-index: 1; }
+
+/* ---- Chat : heure + emoji ---- */
+.chattime { color: var(--muted); font-size: 10px; opacity: .7; }
+.emoji-btn { flex: 0 0 auto; }
+.emoji-bar { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.emoji-bar .emoji { padding: 4px 6px; font-size: 18px; line-height: 1; }
+
+/* ---- Taunt (rire) : visuel pour ceux sans son ---- */
+.taunt-overlay {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px; pointer-events: none; z-index: 60;
+}
+.taunt-overlay .taunt-emo { font-size: clamp(80px, 18vw, 190px); filter: drop-shadow(0 0 34px #ff3b6b); }
+.taunt-overlay .taunt-name { font-size: clamp(18px, 4vw, 30px); font-weight: 700; text-shadow: 0 0 16px #000; }
+.taunt-overlay.show { animation: tauntpop .5s ease-out; }
+@keyframes tauntpop { 0% { transform: scale(.4); opacity: 0; } 40% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }

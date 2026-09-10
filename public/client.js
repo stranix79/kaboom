@@ -3,6 +3,7 @@ import { THEMES } from './themes.js';
 import { drawGame } from './render.js';
 import { I18N } from './lang.js';
 import { Sound } from './sound.js';
+import { Attract } from './attract.js';
 
 // Toute erreur JS devient visible a l'ecran (utile pour debugger a distance sur Safari/mobile).
 window.addEventListener('error', (e) => showErr('JS: ' + e.message));
@@ -11,7 +12,11 @@ function showErr(msg) { const b = document.getElementById('errbar'); if (b) { b.
 
 const $ = (id) => document.getElementById(id);
 const screens = { home: $('home'), lobby: $('lobby'), game: $('game') };
-function show(name) { for (const k in screens) screens[k].hidden = k !== name; }
+const attract = new Attract('bg'); // fond animé de l'accueil
+function show(name) {
+  for (const k in screens) screens[k].hidden = k !== name;
+  if (name === 'home') attract.start(); else attract.stop();
+}
 
 // ---- Preferences persistees ----
 let myName = localStorage.getItem('kaboom_name') || '';
@@ -85,6 +90,7 @@ function handle(m) {
     case 'chat': addChatLine(m.line); break;
     case 'start': for (const k in prevGhost) delete prevGhost[k]; fx.length = 0; show('game'); break;
     case 'state': state = m.s; break;
+    case 'taunt': sound.laugh(); showTaunt(m.name, m.color); break;
     case 'error': toast(m.code === 'noroom' ? t('errNoRoom') : m.code === 'full' ? t('errFull') : (m.msg || 'error')); break;
   }
 }
@@ -107,6 +113,7 @@ function applyTheme() {
   root.setProperty('--text', ui.text); root.setProperty('--muted', ui.muted);
   root.setProperty('--accent', ui.accent); root.setProperty('--accent2', ui.accent2);
   root.setProperty('--on-accent', ui.onAccent); root.setProperty('--font', ui.fontFamily);
+  attract.setColors(THEMES[themeKey]);
   buildThemePicker();
 }
 
@@ -189,10 +196,23 @@ function renderLobby(m) {
 function addChatLine(l) {
   const log = $('chatLog');
   const el = document.createElement('div'); el.className = 'chatline';
-  el.innerHTML = `<b style="color:${l.color}">${esc(l.name)}</b> ${esc(l.text)}`;
+  const time = l.ts ? new Date(l.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+  el.innerHTML = `<span class="chattime">${time}</span> <b style="color:${l.color}">${esc(l.name)}</b> ${esc(l.text)}`;
   log.appendChild(el);
   log.scrollTop = log.scrollHeight;
 }
+// Barre d'emoji rapide pour le chat
+const EMOJIS = ['😂', '🤣', '😈', '💣', '🔥', '👻', '💀', '🎉', '😱', '😎', '👍', '❤️', '🤡', '🙃', '😭', '🫡'];
+function buildEmojiBar() {
+  const bar = $('emojiBar'); bar.innerHTML = '';
+  for (const e of EMOJIS) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'emoji'; b.textContent = e;
+    b.onclick = () => { const inp = $('chatInput'); inp.value += e; inp.focus(); };
+    bar.appendChild(b);
+  }
+}
+$('emojiBtn').onclick = () => { const bar = $('emojiBar'); bar.hidden = !bar.hidden; };
+buildEmojiBar();
 function sendChat() {
   const inp = $('chatInput'); const txt = (inp.value || '').trim();
   if (!txt) return; send({ t: 'chat', text: txt }); inp.value = '';
@@ -221,6 +241,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'Escape') { goHome(); return; }
   if (e.repeat) return;
   if (e.code === 'Space') { e.preventDefault(); plant(); return; }
+  if (e.code === 'KeyL') { send({ t: 'taunt' }); return; }
   keys[e.code] = true; updateInput();
 });
 window.addEventListener('keyup', (e) => { keys[e.code] = false; updateInput(); });
@@ -240,6 +261,16 @@ function bindTouch(id, ax, ay) {
 }
 bindTouch('padUp', 0, -1); bindTouch('padDown', 0, 1); bindTouch('padLeft', -1, 0); bindTouch('padRight', 1, 0);
 for (const ev of ['touchstart', 'mousedown']) $('padBomb').addEventListener(ev, (e) => { e.preventDefault(); plant(); });
+
+// Taunt : diffuse un rire glauque a tous les joueurs + visuel a l'ecran (pour ceux sans son)
+$('tauntBtn').onclick = () => send({ t: 'taunt' });
+let tauntTimer;
+function showTaunt(name, color) {
+  const el = $('tauntOverlay');
+  el.innerHTML = `<div class="taunt-emo">😈</div><div class="taunt-name" style="color:${color}">${esc(name)} : HÉHÉHÉHÉ…</div>`;
+  el.hidden = false; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  clearTimeout(tauntTimer); tauntTimer = setTimeout(() => { el.hidden = true; }, 1900);
+}
 
 // ---- Boucle de rendu ----
 const canvas = $('canvas');
@@ -353,5 +384,6 @@ function toast(msg) { const el = $('toast'); el.textContent = msg; el.hidden = f
 applyTheme();
 applyLang();
 updateSoundBtn();
+attract.start();
 connect();
 loop();

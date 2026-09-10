@@ -162,10 +162,18 @@ wss.on('connection', (ws) => {
         const text = String(m.text || '').slice(0, 200).trim();
         if (!room || !text) break;
         const info = room.members.get(client.id);
-        const line = { name: info?.name || client.name, color: info?.color || '#fff', text };
+        const line = { name: info?.name || client.name, color: info?.color || '#fff', text, ts: Date.now() };
         room.chat.push(line);
         if (room.chat.length > 60) room.chat.shift();
         room.broadcast({ t: 'chat', line });
+        break;
+      }
+
+      case 'taunt': {
+        const room = client.room;
+        if (!room?.game) break;
+        const info = room.members.get(client.id);
+        room.broadcast({ t: 'taunt', name: info?.name || client.name, color: info?.color || '#fff' });
         break;
       }
 
