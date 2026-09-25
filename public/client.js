@@ -6,8 +6,15 @@ import { Sound } from './sound.js';
 import { Attract } from './attract.js';
 
 // Toute erreur JS devient visible a l'ecran (utile pour debugger a distance sur Safari/mobile).
-window.addEventListener('error', (e) => showErr('JS: ' + e.message));
-window.addEventListener('unhandledrejection', (e) => showErr('Promise: ' + (e.reason?.message || e.reason)));
+// On ignore les erreurs qui viennent des extensions du navigateur (1Password, Bitwarden...) :
+// elles injectent leur script dans la page et leurs plantages n'ont rien a voir avec le jeu.
+function isExtensionError(e) {
+  const src = String(e?.filename || '') + ' ' + String(e?.reason?.stack || e?.error?.stack || '');
+  const msg = String(e?.message || e?.reason?.message || e?.reason || '');
+  return /extension:\/\/|sendExtensionMessage|getUrlAutofillTargetingRules|safari-web-extension/i.test(src + ' ' + msg);
+}
+window.addEventListener('error', (e) => { if (!isExtensionError(e)) showErr('JS: ' + e.message); });
+window.addEventListener('unhandledrejection', (e) => { if (!isExtensionError(e)) showErr('Promise: ' + (e.reason?.message || e.reason)); });
 function showErr(msg) { const b = document.getElementById('errbar'); if (b) { b.textContent = '⚠ ' + msg; b.hidden = false; } }
 
 const $ = (id) => document.getElementById(id);
