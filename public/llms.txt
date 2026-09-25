@@ -1,0 +1,32 @@
+# Kaboom
+
+> Kaboom is a free multiplayer Bomberman remake that runs in the browser, made to be played in two clicks during a lunch break. Create a room, share the link, everyone lands in the arena. Last one standing wins. Dead players come back as vengeful ghosts who can drop trap bombs on the survivors.
+
+Kaboom is a project by Stranix. No account, no download, no database: rooms live in memory and disappear when they empty. The interface is available in French and English.
+
+## Gameplay
+
+- Rooms are public or private, joined by a shareable link (`?room=CODE`); the arena size adapts to the number of players.
+- Vengeful ghosts: when you die you float above the arena and can drop a trap bomb every few seconds, so nobody waits idle until the round ends.
+- Sudden death: after about 55 seconds the walls close in from the edges in a spiral, keeping rounds short.
+- Power-ups: extra bomb, blast range, speed.
+- Three visual themes: neon terminal, retro pixel, minimal flat.
+- Controls: arrow keys or WASD to move, space to drop a bomb; a touch pad and bomb button appear on mobile.
+
+## Technical notes
+
+- Authoritative Node.js server: it simulates the game and broadcasts the full state about 20 times per second over WebSocket; the client only renders and sends inputs.
+- Open source, see the repository below.
+
+## Pages
+
+- [Play Kaboom](https://kaboom.stranix.net/): home, lobby and game in a single page
+- [Sitemap](https://kaboom.stranix.net/sitemap.xml)
+
+## Ecosystem
+
+- [Source code](https://github.com/stranix79/kaboom): the game's repository
+- [Stranix](https://stranix.net): the studio behind Kaboom
+- [Stranix apps](https://apps.stranix.net): other apps by Stranix
+- [Deckhand](https://deckhand.show): web presentations by Stranix
+- [GitHub](https://github.com/stranix79): other open-source projects by Stranix

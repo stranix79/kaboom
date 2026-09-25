@@ -16,7 +16,8 @@ const BUILD = process.env.KABOOM_BUILD || 'dev';
 const BUILD_DATE = new Date().toISOString().slice(0, 10);
 
 // ---- Serveur HTTP : fichiers statiques du dossier public/ ----
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.png': 'image/png' };
+// .txt et .xml : robots.txt, sitemap.xml, llms.txt et la cle IndexNow doivent partir en texte, pas en octet-stream
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.png': 'image/png', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml; charset=utf-8', '.mp3': 'audio/mpeg' };
 const server = http.createServer((req, res) => {
   let urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
   if (urlPath === '/') urlPath = '/index.html';
