@@ -3,7 +3,7 @@
 Un remake multijoueur de **Bomberman**, pensé pour se jouer en 2 clics pendant la pause de midi.
 Tu crées une room, tu partages le lien, tout le monde arrive dans l'arène. **Dernier vivant gagne.**
 
-> Projet de l'atelier [code79.com](https://code79.com) · destiné à `kaboom.stranix.net`.
+> **Jouer en ligne : [kaboom.stranix.net](https://kaboom.stranix.net)** · projet de l'atelier [code79.com](https://code79.com), par [Gilles Fauvie](https://stranix.net).
 
 ## La variante : Fantômes vengeurs 👻
 
@@ -93,3 +93,11 @@ Utilise ta propre voix, ou un son libre de droits (CC0 / Pixabay).
 - Bombes lançables (power-up « kick » / « throw »).
 - Mode équipes, emotes, spectateur.
 - Sons et petites vibrations sur explosion.
+
+## Du même auteur
+
+- [stranix.net](https://stranix.net) : le blog, où l'on parle de ce genre de projets.
+- [Deckhand](https://deckhand.show) : des présentations HTML écrites en Markdown.
+- [Chutag](https://chutag.stranix.net) : des tags QR pour retrouver ses objets perdus (bêta).
+- [apps.stranix.net](https://apps.stranix.net) : les apps macOS de Stranix.
+- [CODE79](https://code79.com) : l'atelier devops derrière tout ça.
